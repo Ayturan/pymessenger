@@ -1,7 +1,7 @@
 import os
 from enum import Enum
 
-import requests
+import requests, json
 from requests_toolbelt import MultipartEncoder
 
 from pymessenger import utils
@@ -85,8 +85,49 @@ class Bot:
         multipart_header = {
             'Content-Type': multipart_data.content_type
         }
-        return requests.post(self.graph_url, data=multipart_data,
+        return requests.post('{0}/me/messages'.format(self.graph_url), data=multipart_data,
                              params=self.auth_args, headers=multipart_header).json()
+
+    def send_attachment_as_message_tags(self, recipient_id, attachment_type, attachment_path,
+                                        notification_type=NotificationType.regular):
+        """Send an attachment to the specified recipient using local path.
+        Input:
+            recipient_id: recipient id to send to
+            attachment_type: type of attachment (image, video, audio, file)
+            attachment_path: Path of attachment
+        Output:
+            Response from API as <dict>
+        """
+        payload = {
+            'recipient':
+                json.dumps({
+                    'id': recipient_id
+                })
+            ,
+            'message':
+                json.dumps(
+                    {
+                        'attachment': {
+                            'type': attachment_type,
+                            'payload': {}
+                        }
+                    }),
+            'filedata': (os.path.basename(attachment_path), open(attachment_path, 'rb'), 'file/pdf'),
+            'messaging_type': 'MESSAGE_TAG',
+            'tag': 'ACCOUNT_UPDATE'
+        }
+
+        multipart_data = MultipartEncoder(payload)
+        multipart_header = {
+            'Content-Type': multipart_data.content_type
+        }
+
+        print(payload)
+        r = requests.post('{0}/me/messages'.format(self.graph_url), data=multipart_data,
+                          params=self.auth_args, headers=multipart_header).json()
+        print(r)
+
+        return r
 
     def send_attachment_url(self, recipient_id, attachment_type, attachment_url,
                             notification_type=NotificationType.regular):
@@ -257,6 +298,18 @@ class Bot:
         """
         return self.send_attachment(recipient_id, "file", file_path, notification_type)
 
+    def send_file_as_message_tags(self, recipient_id, file_path, notification_type=NotificationType.regular):
+        """Send file to the specified recipient.
+        https://developers.facebook.com/docs/messenger-platform/send-api-reference/file-attachment
+        Input:
+            recipient_id: recipient id to send to
+            file_path: path to file to be sent
+        Output:
+            Response from API as <dict>
+        """
+        print(file_path)
+        return self.send_attachment_as_message_tags(recipient_id, "file", file_path, notification_type)
+
     def send_file_url(self, recipient_id, file_url, notification_type=NotificationType.regular):
         """Send file to the specified recipient.
         https://developers.facebook.com/docs/messenger-platform/send-api-reference/file-attachment
@@ -314,8 +367,8 @@ class Bot:
         request_endpoint = '{0}/me/messenger_profile'.format(self.graph_url)
         response = requests.post(
             request_endpoint,
-            params = self.auth_args,
-            json = gs_obj
+            params=self.auth_args,
+            json=gs_obj
         )
         result = response.json()
         return result
@@ -331,40 +384,40 @@ class Bot:
         request_endpoint = '{0}/me/messenger_profile'.format(self.graph_url)
         response = requests.post(
             request_endpoint,
-            params = self.auth_args,
-            json = pm_obj
+            params=self.auth_args,
+            json=pm_obj
         )
         result = response.json()
         return result
 
     def remove_get_started(self):
-            """delete get started button.
-            https://developers.facebook.com/docs/messenger-platform/reference/messenger-profile-api/#delete
-            Output:
-            Response from API as <dict>
-            """
-            delete_obj = {"fields": ["get_started"]}
-            request_endpoint = '{0}/me/messenger_profile'.format(self.graph_url)
-            response = requests.delete(
-                request_endpoint,
-                params = self.auth_args,
-                json = delete_obj
-            )
-            result = response.json()
-            return result
+        """delete get started button.
+        https://developers.facebook.com/docs/messenger-platform/reference/messenger-profile-api/#delete
+        Output:
+        Response from API as <dict>
+        """
+        delete_obj = {"fields": ["get_started"]}
+        request_endpoint = '{0}/me/messenger_profile'.format(self.graph_url)
+        response = requests.delete(
+            request_endpoint,
+            params=self.auth_args,
+            json=delete_obj
+        )
+        result = response.json()
+        return result
 
     def remove_persistent_menu(self):
-            """delete persistent menu.
-            https://developers.facebook.com/docs/messenger-platform/reference/messenger-profile-api/#delete
-            Output:
-            Response from API as <dict>
-            """
-            delete_obj = {"fields": ["persistent_menu"]}
-            request_endpoint = '{0}/me/messenger_profile'.format(self.graph_url)
-            response = requests.delete(
-                request_endpoint,
-                params = self.auth_args,
-                json = delete_obj
-            )
-            result = response.json()
-            return result
+        """delete persistent menu.
+        https://developers.facebook.com/docs/messenger-platform/reference/messenger-profile-api/#delete
+        Output:
+        Response from API as <dict>
+        """
+        delete_obj = {"fields": ["persistent_menu"]}
+        request_endpoint = '{0}/me/messenger_profile'.format(self.graph_url)
+        response = requests.delete(
+            request_endpoint,
+            params=self.auth_args,
+            json=delete_obj
+        )
+        result = response.json()
+        return result
