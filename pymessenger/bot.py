@@ -201,6 +201,49 @@ class Bot:
             }
         }, notification_type)
 
+    def send_multibubble_button_message(self, recipient_id, text, buttons, notification_type=NotificationType.regular,
+                                        title_first="Menu", title_middle="Menu", title_last="Menu"):
+        """Send text messages to the specified recipient.
+        https://developers.facebook.com/docs/messenger-platform/send-api-reference/button-template
+        Input:
+            recipient_id: recipient id to send to
+            text: text of message to send
+            buttons: buttons to send
+        Output:
+            Response from API as <dict>
+        """
+        isFirst=True
+        elements=list()
+        while len(buttons)>0:
+            if isFirst:
+                title=title_first
+                isFirst=False
+            elif len(buttons)<=3:
+                title=title_last
+            else:
+                title=title_middle
+
+            bubble_buttons=list()
+            while len(bubble_buttons)<3:
+                if len(buttons)>0:
+                    bubble_buttons.append(buttons.pop(0))
+                else:
+                    break
+
+            elements.append({
+                "title":title,
+                "buttons": bubble_buttons
+            })
+        return self.send_message(recipient_id, {
+            "attachment": {
+                "type": "template",
+                "payload": {
+                    "template_type": "generic",
+                    "elements": elements
+                }
+            }
+        }, notification_type)
+
     def send_action(self, recipient_id, action, notification_type=NotificationType.regular):
         """Send typing indicators or send read receipts to the specified recipient.
         https://developers.facebook.com/docs/messenger-platform/send-api-reference/sender-actions
